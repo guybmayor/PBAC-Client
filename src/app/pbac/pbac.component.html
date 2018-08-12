@@ -1,0 +1,89 @@
+<div class="container">
+    <h4 class="row">Select case to test:</h4>
+
+    <div class="row">
+        <span class="col-sm-8">
+            <select (change)="selectedCase = $event.target.value">
+                <option disabled hidden [value]="undefined">-- select --</option>
+                <option *ngFor="let caseName of casesNames" [value]="caseName">{{caseName}}</option>
+            </select>
+            <button (click)="initCase(selectedCase)">select</button>
+            <button (click)="loadDefaultRequests(selectedCase)">init default</button>
+        </span>
+        <input class="col-sm-4" type="file" accept=".json" (change)="uploadNewCase($event)"/>
+    </div>
+    
+    <hr *ngIf="caseDataHasLoad">
+    <div *ngIf="caseDataHasLoad" class="row">
+        <div class="col">
+            <label>Action Type</label>
+            <select [(ngModel)]="selectedActionType" (ngModelChange)="changeActionType($event)">
+                <option disabled [ngValue]="undefined">-- select --</option>
+                <option *ngFor="let type of actionTypes" [ngValue]="type">{{type.name}}</option>
+            </select>
+        </div>
+
+    </div>
+    <hr *ngIf="selectedActionType">
+    <form *ngIf="selectedActionType" class="row" (ngSubmit)="onSubmit()" #requestForm="ngForm">
+        <div class="form-group col align-self-start inputCol">
+            <button type="button" (click)="createUser()">Create new user</button>
+            <br/>
+            <label for="userId">User</label>
+            <select class="form-control" id="userId"
+                    required
+                    [(ngModel)]="newRequest.userId" name="userId"
+                    #userId="ngModel">
+                <option disabled hidden [value]="undefined">-- select --</option>
+                <option *ngFor="let user of users" [value]="user.id">au{{user.id}}</option>
+            </select>
+            <div [hidden]="userId.valid || userId.pristine" class="alert alert-danger">
+                    User is required
+            </div>
+        </div>
+
+        <div *ngIf="selectedActionType">
+            <div *ngFor="let role of inputRoles; let i=index;" class="form-group col align-self-start inputCol">
+                <label for="'role' + i">input #{{i + 1}}: {{role.name}}</label>
+                <select class="form-control" id="'inputObj_' + i"
+                        required
+                        [(ngModel)]="newRequest.objects[i].object" name="'inputObj_' + i">
+                    <option disabled hidden [ngValue]="selectUndefinedOptionValue">-- select --</option>
+                    <option *ngFor="let obj of objects" [ngValue]="obj">O{{obj.id}}v{{obj.version}}</option>
+                </select>
+            </div>
+        </div>
+        <br/>
+        <div class="col" align-self-end>
+            <button type="submit" class="btn btn-success" [disabled]="!requestForm.form.valid">Submit</button>
+        </div>
+        <hr>
+    </form>
+
+    <div *ngFor="let obj of previousTransactions; let i=index;" class="row">
+        <span>{{i + 1}})&nbsp;(</span>
+        <span>au{{obj.transaction.user.id}}</span>
+        <span>,&nbsp;{{obj.transaction.action.type.name}}{{obj.transaction.action.id}}</span>
+        <span *ngFor="let tanInObj of obj.transaction.inputObjects">,&nbsp;O{{tanInObj.id}}v{{tanInObj.version}}</span>
+        <span *ngFor="let tanOutObj of obj.transaction.outputObjects">,&nbsp;O{{tanOutObj.id}}v{{tanOutObj.version}}</span>
+        <span>):&nbsp;</span>
+        
+        <span>&#8826;{{obj.provenance.controllDependency.action.type.name}}{{obj.provenance.controllDependency.action.id}},&nbsp;</span>
+        <span>au{{obj.provenance.controllDependency.user.id}},&nbsp;</span>
+        <span>C&#8827;</span>
+
+        <ng-template ngFor let-used [ngForOf]="obj.provenance.useDependencies">
+                <span>,&nbsp;</span>
+                <span>&#8826;{{used.action.type.name}}{{used.action.id}},&nbsp;</span>
+                <span>O{{used.object.id}}v{{used.object.version}},&nbsp;</span>
+                <span>U{{used.role.name}}&#8827;</span>
+        </ng-template>
+
+        <ng-template ngFor let-generated [ngForOf]="obj.provenance.generatedDependencies">
+                <span>,&nbsp;</span>
+                <span>&#8826;O{{generated.object.id}}v{{generated.object.version}},&nbsp;</span>
+                <span>{{generated.action.type.name}}{{generated.action.id}},&nbsp;</span>
+                <span>G{{generated.role.name}}&#8827;</span>
+        </ng-template>
+    </div>
+</div>
